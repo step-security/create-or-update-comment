@@ -23,7 +23,7 @@
     "update",
     "comment"
   ],
-  "author": "Peter Evans",
+  "author": "step-security",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/step-security/create-or-update-comment/issues"
