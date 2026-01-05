@@ -125,7 +125,7 @@ The template is rendered using the [render-template](https://github.com/chuhlomi
 ```yml
       - name: Render template
         id: template
-        uses: chuhlomin/render-template@v1.4
+        uses: chuhlomin/render-template@v1
         with:
           template: .github/comment-template.md
           vars: |
