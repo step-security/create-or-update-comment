@@ -1,3 +1,5 @@
+[![StepSecurity Maintained Action](https://raw.githubusercontent.com/step-security/maintained-actions-assets/main/assets/maintained-action-banner.png)](https://docs.stepsecurity.io/actions/stepsecurity-maintained-actions)
+
 # Create or Update Comment
 [![CI](https://github.com/step-security/create-or-update-comment/workflows/CI/badge.svg)](https://github.com/step-security/create-or-update-comment/actions?query=workflow%3ACI)
 
