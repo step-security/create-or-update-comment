@@ -29,22 +29,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __asyncValues = (this && this.__asyncValues) || function (o) {
-    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-    var m = o[Symbol.asyncIterator], i;
-    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
-    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
-    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.createOrUpdateComment = void 0;
 const core = __importStar(__nccwpck_require__(7484));
@@ -76,47 +60,43 @@ function getReactionsSet(reactions) {
     }
     return reactionsSet;
 }
-function addReactions(octokit, owner, repo, commentId, reactions) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const results = yield Promise.allSettled(reactions.map((reaction) => __awaiter(this, void 0, void 0, function* () {
-            yield octokit.rest.reactions.createForIssueComment({
-                owner: owner,
-                repo: repo,
-                comment_id: commentId,
-                content: reaction
-            });
-            core.info(`Setting '${reaction}' reaction on comment.`);
-        })));
-        for (let i = 0, l = results.length; i < l; i++) {
-            if (results[i].status === 'fulfilled') {
-                core.info(`Added reaction '${reactions[i]}' to comment id '${commentId}'.`);
-            }
-            else if (results[i].status === 'rejected') {
-                core.warning(`Adding reaction '${reactions[i]}' to comment id '${commentId}' failed.`);
-            }
+async function addReactions(octokit, owner, repo, commentId, reactions) {
+    const results = await Promise.allSettled(reactions.map(async (reaction) => {
+        await octokit.rest.reactions.createForIssueComment({
+            owner: owner,
+            repo: repo,
+            comment_id: commentId,
+            content: reaction
+        });
+        core.info(`Setting '${reaction}' reaction on comment.`);
+    }));
+    for (let i = 0, l = results.length; i < l; i++) {
+        if (results[i].status === 'fulfilled') {
+            core.info(`Added reaction '${reactions[i]}' to comment id '${commentId}'.`);
         }
-    });
+        else if (results[i].status === 'rejected') {
+            core.warning(`Adding reaction '${reactions[i]}' to comment id '${commentId}' failed.`);
+        }
+    }
 }
-function removeReactions(octokit, owner, repo, commentId, reactions) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const results = yield Promise.allSettled(reactions.map((reaction) => __awaiter(this, void 0, void 0, function* () {
-            yield octokit.rest.reactions.deleteForIssueComment({
-                owner: owner,
-                repo: repo,
-                comment_id: commentId,
-                reaction_id: reaction.id
-            });
-            core.info(`Removing '${reaction.content}' reaction from comment.`);
-        })));
-        for (let i = 0, l = results.length; i < l; i++) {
-            if (results[i].status === 'fulfilled') {
-                core.info(`Removed reaction '${reactions[i].content}' from comment id '${commentId}'.`);
-            }
-            else if (results[i].status === 'rejected') {
-                core.warning(`Removing reaction '${reactions[i].content}' from comment id '${commentId}' failed.`);
-            }
+async function removeReactions(octokit, owner, repo, commentId, reactions) {
+    const results = await Promise.allSettled(reactions.map(async (reaction) => {
+        await octokit.rest.reactions.deleteForIssueComment({
+            owner: owner,
+            repo: repo,
+            comment_id: commentId,
+            reaction_id: reaction.id
+        });
+        core.info(`Removing '${reaction.content}' reaction from comment.`);
+    }));
+    for (let i = 0, l = results.length; i < l; i++) {
+        if (results[i].status === 'fulfilled') {
+            core.info(`Removed reaction '${reactions[i].content}' from comment id '${commentId}'.`);
         }
-    });
+        else if (results[i].status === 'rejected') {
+            core.warning(`Removing reaction '${reactions[i].content}' from comment id '${commentId}' failed.`);
+        }
+    }
 }
 function appendSeparatorTo(body, separator) {
     switch (separator) {
@@ -137,123 +117,95 @@ function truncateBody(body) {
     }
     return body;
 }
-function createComment(octokit, owner, repo, issueNumber, body) {
-    return __awaiter(this, void 0, void 0, function* () {
-        body = truncateBody(body);
-        const { data: comment } = yield octokit.rest.issues.createComment({
-            owner: owner,
-            repo: repo,
-            issue_number: issueNumber,
-            body
-        });
-        core.info(`Created comment id '${comment.id}' on issue '${issueNumber}'.`);
-        return comment.id;
+async function createComment(octokit, owner, repo, issueNumber, body) {
+    body = truncateBody(body);
+    const { data: comment } = await octokit.rest.issues.createComment({
+        owner: owner,
+        repo: repo,
+        issue_number: issueNumber,
+        body
     });
+    core.info(`Created comment id '${comment.id}' on issue '${issueNumber}'.`);
+    return comment.id;
 }
-function updateComment(octokit, owner, repo, commentId, body, editMode, appendSeparator) {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (body) {
-            let commentBody = '';
-            if (editMode == 'append') {
-                // Get the comment body
-                const { data: comment } = yield octokit.rest.issues.getComment({
-                    owner: owner,
-                    repo: repo,
-                    comment_id: commentId
-                });
-                commentBody = appendSeparatorTo(comment.body ? comment.body : '', appendSeparator);
-            }
-            commentBody = truncateBody(commentBody + body);
-            core.debug(`Comment body: ${commentBody}`);
-            yield octokit.rest.issues.updateComment({
+async function updateComment(octokit, owner, repo, commentId, body, editMode, appendSeparator) {
+    if (body) {
+        let commentBody = '';
+        if (editMode == 'append') {
+            // Get the comment body
+            const { data: comment } = await octokit.rest.issues.getComment({
                 owner: owner,
                 repo: repo,
-                comment_id: commentId,
-                body: commentBody
+                comment_id: commentId
             });
-            core.info(`Updated comment id '${commentId}'.`);
+            commentBody = appendSeparatorTo(comment.body ? comment.body : '', appendSeparator);
         }
-        return commentId;
-    });
+        commentBody = truncateBody(commentBody + body);
+        core.debug(`Comment body: ${commentBody}`);
+        await octokit.rest.issues.updateComment({
+            owner: owner,
+            repo: repo,
+            comment_id: commentId,
+            body: commentBody
+        });
+        core.info(`Updated comment id '${commentId}'.`);
+    }
+    return commentId;
 }
-function getAuthenticatedUser(octokit) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const { data: user } = yield octokit.rest.users.getAuthenticated();
-            return user.login;
+async function getAuthenticatedUser(octokit) {
+    try {
+        const { data: user } = await octokit.rest.users.getAuthenticated();
+        return user.login;
+    }
+    catch (error) {
+        if (utils
+            .getErrorMessage(error)
+            .includes('Resource not accessible by integration')) {
+            // In this case we can assume the token is the default GITHUB_TOKEN and
+            // therefore the user is 'github-actions[bot]'.
+            return 'github-actions[bot]';
         }
-        catch (error) {
-            if (utils
-                .getErrorMessage(error)
-                .includes('Resource not accessible by integration')) {
-                // In this case we can assume the token is the default GITHUB_TOKEN and
-                // therefore the user is 'github-actions[bot]'.
-                return 'github-actions[bot]';
-            }
-            else {
-                throw error;
-            }
+        else {
+            throw error;
         }
-    });
+    }
 }
-function getCommentReactionsForUser(octokit, owner, repo, commentId, user) {
-    var _a, e_1, _b, _c;
-    return __awaiter(this, void 0, void 0, function* () {
-        const userReactions = [];
-        try {
-            for (var _d = true, _e = __asyncValues(octokit.paginate.iterator(octokit.rest.reactions.listForIssueComment, {
-                owner,
-                repo,
-                comment_id: commentId,
-                per_page: 100
-            })), _f; _f = yield _e.next(), _a = _f.done, !_a;) {
-                _c = _f.value;
-                _d = false;
-                try {
-                    const { data: reactions } = _c;
-                    const filteredReactions = reactions
-                        .filter(reaction => reaction.user.login === user)
-                        .map(reaction => {
-                        return { id: reaction.id, content: reaction.content };
-                    });
-                    userReactions.push(...filteredReactions);
-                }
-                finally {
-                    _d = true;
-                }
-            }
-        }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
-        finally {
-            try {
-                if (!_d && !_a && (_b = _e.return)) yield _b.call(_e);
-            }
-            finally { if (e_1) throw e_1.error; }
-        }
-        return userReactions;
-    });
+async function getCommentReactionsForUser(octokit, owner, repo, commentId, user) {
+    const userReactions = [];
+    for await (const { data: reactions } of octokit.paginate.iterator(octokit.rest.reactions.listForIssueComment, {
+        owner,
+        repo,
+        comment_id: commentId,
+        per_page: 100
+    })) {
+        const filteredReactions = reactions
+            .filter(reaction => reaction.user.login === user)
+            .map(reaction => {
+            return { id: reaction.id, content: reaction.content };
+        });
+        userReactions.push(...filteredReactions);
+    }
+    return userReactions;
 }
-function createOrUpdateComment(inputs, body) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const [owner, repo] = inputs.repository.split('/');
-        const octokit = github.getOctokit(inputs.token);
-        const commentId = inputs.commentId
-            ? yield updateComment(octokit, owner, repo, inputs.commentId, body, inputs.editMode, inputs.appendSeparator)
-            : yield createComment(octokit, owner, repo, inputs.issueNumber, body);
-        core.setOutput('comment-id', commentId);
-        if (inputs.reactions) {
-            const reactionsSet = getReactionsSet(inputs.reactions);
-            // Remove reactions if reactionsEditMode is 'replace'
-            if (inputs.commentId && inputs.reactionsEditMode === 'replace') {
-                const authenticatedUser = yield getAuthenticatedUser(octokit);
-                const userReactions = yield getCommentReactionsForUser(octokit, owner, repo, commentId, authenticatedUser);
-                core.debug((0, util_1.inspect)(userReactions));
-                const reactionsToRemove = userReactions.filter(reaction => !reactionsSet.includes(reaction.content));
-                yield removeReactions(octokit, owner, repo, commentId, reactionsToRemove);
-            }
-            yield addReactions(octokit, owner, repo, commentId, reactionsSet);
+async function createOrUpdateComment(inputs, body) {
+    const [owner, repo] = inputs.repository.split('/');
+    const octokit = github.getOctokit(inputs.token);
+    const commentId = inputs.commentId
+        ? await updateComment(octokit, owner, repo, inputs.commentId, body, inputs.editMode, inputs.appendSeparator)
+        : await createComment(octokit, owner, repo, inputs.issueNumber, body);
+    core.setOutput('comment-id', commentId);
+    if (inputs.reactions) {
+        const reactionsSet = getReactionsSet(inputs.reactions);
+        // Remove reactions if reactionsEditMode is 'replace'
+        if (inputs.commentId && inputs.reactionsEditMode === 'replace') {
+            const authenticatedUser = await getAuthenticatedUser(octokit);
+            const userReactions = await getCommentReactionsForUser(octokit, owner, repo, commentId, authenticatedUser);
+            core.debug((0, util_1.inspect)(userReactions));
+            const reactionsToRemove = userReactions.filter(reaction => !reactionsSet.includes(reaction.content));
+            await removeReactions(octokit, owner, repo, commentId, reactionsToRemove);
         }
-    });
+        await addReactions(octokit, owner, repo, commentId, reactionsSet);
+    }
 }
 exports.createOrUpdateComment = createOrUpdateComment;
 
@@ -288,39 +240,48 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(7484));
 const create_or_update_comment_1 = __nccwpck_require__(2894);
 const fs_1 = __nccwpck_require__(9896);
+const fs = __importStar(__nccwpck_require__(9896));
 const util_1 = __nccwpck_require__(9023);
 const utils = __importStar(__nccwpck_require__(9277));
 const axios_1 = __importStar(__nccwpck_require__(7269));
-function validateSubscription() {
-    var _a;
-    return __awaiter(this, void 0, void 0, function* () {
-        const API_URL = `https://agent.api.stepsecurity.io/v1/github/${process.env.GITHUB_REPOSITORY}/actions/subscription`;
-        try {
-            yield axios_1.default.get(API_URL, { timeout: 3000 });
+async function validateSubscription() {
+    const eventPath = process.env.GITHUB_EVENT_PATH;
+    let repoPrivate;
+    if (eventPath && fs.existsSync(eventPath)) {
+        const eventData = JSON.parse(fs.readFileSync(eventPath, 'utf8'));
+        repoPrivate = eventData?.repository?.private;
+    }
+    const upstream = 'peter-evans/create-or-update-comment';
+    const action = process.env.GITHUB_ACTION_REPOSITORY;
+    const docsUrl = 'https://docs.stepsecurity.io/actions/stepsecurity-maintained-actions';
+    core.info('');
+    core.info('[1;36mStepSecurity Maintained Action[0m');
+    core.info(`Secure drop-in replacement for ${upstream}`);
+    if (repoPrivate === false)
+        core.info('[32m✓ Free for public repositories[0m');
+    core.info(`[36mLearn more:[0m ${docsUrl}`);
+    core.info('');
+    if (repoPrivate === false)
+        return;
+    const serverUrl = process.env.GITHUB_SERVER_URL || 'https://github.com';
+    const body = { action: action || '' };
+    if (serverUrl !== 'https://github.com')
+        body.ghes_server = serverUrl;
+    try {
+        await axios_1.default.post(`https://agent.api.stepsecurity.io/v1/github/${process.env.GITHUB_REPOSITORY}/actions/maintained-actions-subscription`, body, { timeout: 3000 });
+    }
+    catch (error) {
+        if ((0, axios_1.isAxiosError)(error) && error.response?.status === 403) {
+            core.error(`[1;31mThis action requires a StepSecurity subscription for private repositories.[0m`);
+            core.error(`[31mLearn how to enable a subscription: ${docsUrl}[0m`);
+            process.exit(1);
         }
-        catch (error) {
-            if ((0, axios_1.isAxiosError)(error) && ((_a = error.response) === null || _a === void 0 ? void 0 : _a.status) === 403) {
-                core.error('Subscription is not valid. Reach out to support@stepsecurity.io');
-                process.exit(1);
-            }
-            else {
-                core.info('Timeout or API not reachable. Continuing to next step.');
-            }
-        }
-    });
+        core.info('Timeout or API not reachable. Continuing to next step.');
+    }
 }
 function getBody(inputs) {
     if (inputs.body) {
@@ -333,65 +294,63 @@ function getBody(inputs) {
         return '';
     }
 }
-function run() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            yield validateSubscription();
-            const inputs = {
-                token: core.getInput('token'),
-                repository: core.getInput('repository'),
-                issueNumber: Number(core.getInput('issue-number')),
-                commentId: Number(core.getInput('comment-id')),
-                body: core.getInput('body'),
-                bodyPath: core.getInput('body-path') || core.getInput('body-file'),
-                editMode: core.getInput('edit-mode'),
-                appendSeparator: core.getInput('append-separator'),
-                reactions: utils.getInputAsArray('reactions'),
-                reactionsEditMode: core.getInput('reactions-edit-mode')
-            };
-            core.debug(`Inputs: ${(0, util_1.inspect)(inputs)}`);
-            if (!['append', 'replace'].includes(inputs.editMode)) {
-                throw new Error(`Invalid edit-mode '${inputs.editMode}'.`);
-            }
-            if (!['append', 'replace'].includes(inputs.reactionsEditMode)) {
-                throw new Error(`Invalid reactions edit-mode '${inputs.reactionsEditMode}'.`);
-            }
-            if (!['newline', 'space', 'none'].includes(inputs.appendSeparator)) {
-                throw new Error(`Invalid append-separator '${inputs.appendSeparator}'.`);
-            }
-            if (inputs.bodyPath && inputs.body) {
-                throw new Error("Only one of 'body' or 'body-path' can be set.");
-            }
-            if (inputs.bodyPath) {
-                if (!(0, fs_1.existsSync)(inputs.bodyPath)) {
-                    throw new Error(`File '${inputs.bodyPath}' does not exist.`);
-                }
-            }
-            const body = getBody(inputs);
-            if (inputs.commentId) {
-                if (!body && !inputs.reactions) {
-                    throw new Error("Missing comment 'body', 'body-path', or 'reactions'.");
-                }
-            }
-            else if (inputs.issueNumber) {
-                if (!body) {
-                    throw new Error("Missing comment 'body' or 'body-path'.");
-                }
-            }
-            else {
-                throw new Error("Missing either 'issue-number' or 'comment-id'.");
-            }
-            (0, create_or_update_comment_1.createOrUpdateComment)(inputs, body);
+async function run() {
+    try {
+        await validateSubscription();
+        const inputs = {
+            token: core.getInput('token'),
+            repository: core.getInput('repository'),
+            issueNumber: Number(core.getInput('issue-number')),
+            commentId: Number(core.getInput('comment-id')),
+            body: core.getInput('body'),
+            bodyPath: core.getInput('body-path') || core.getInput('body-file'),
+            editMode: core.getInput('edit-mode'),
+            appendSeparator: core.getInput('append-separator'),
+            reactions: utils.getInputAsArray('reactions'),
+            reactionsEditMode: core.getInput('reactions-edit-mode')
+        };
+        core.debug(`Inputs: ${(0, util_1.inspect)(inputs)}`);
+        if (!['append', 'replace'].includes(inputs.editMode)) {
+            throw new Error(`Invalid edit-mode '${inputs.editMode}'.`);
         }
-        catch (error) {
-            core.debug((0, util_1.inspect)(error));
-            const errMsg = utils.getErrorMessage(error);
-            core.setFailed(errMsg);
-            if (errMsg == 'Resource not accessible by integration') {
-                core.error(`See this action's readme for details about this error`);
+        if (!['append', 'replace'].includes(inputs.reactionsEditMode)) {
+            throw new Error(`Invalid reactions edit-mode '${inputs.reactionsEditMode}'.`);
+        }
+        if (!['newline', 'space', 'none'].includes(inputs.appendSeparator)) {
+            throw new Error(`Invalid append-separator '${inputs.appendSeparator}'.`);
+        }
+        if (inputs.bodyPath && inputs.body) {
+            throw new Error("Only one of 'body' or 'body-path' can be set.");
+        }
+        if (inputs.bodyPath) {
+            if (!(0, fs_1.existsSync)(inputs.bodyPath)) {
+                throw new Error(`File '${inputs.bodyPath}' does not exist.`);
             }
         }
-    });
+        const body = getBody(inputs);
+        if (inputs.commentId) {
+            if (!body && !inputs.reactions) {
+                throw new Error("Missing comment 'body', 'body-path', or 'reactions'.");
+            }
+        }
+        else if (inputs.issueNumber) {
+            if (!body) {
+                throw new Error("Missing comment 'body' or 'body-path'.");
+            }
+        }
+        else {
+            throw new Error("Missing either 'issue-number' or 'comment-id'.");
+        }
+        (0, create_or_update_comment_1.createOrUpdateComment)(inputs, body);
+    }
+    catch (error) {
+        core.debug((0, util_1.inspect)(error));
+        const errMsg = utils.getErrorMessage(error);
+        core.setFailed(errMsg);
+        if (errMsg == 'Resource not accessible by integration') {
+            core.error(`See this action's readme for details about this error`);
+        }
+    }
 }
 run();
 
