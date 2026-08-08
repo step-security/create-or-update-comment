@@ -1,0 +1,18 @@
+{
+   "schema_version": "1",
+   "onboarding_type": "copied",
+   "archived": false,
+   "maintained_action_name": "step-security/create-or-update-comment",
+   "upstream_full_repo_name": "peter-evans/create-or-update-comment",
+   "action_type": "node",
+   "last_release": {
+     "tag_name": "v5.0.1",
+     "created_at": "2026-05-19T15:26:31Z",
+     "published_at": "2026-05-23T15:24:00Z"
+   },
+   "sync": {
+     "ignore_presets": [
+       "defaults_v1"
+     ]
+   }
+ }
